@@ -1,0 +1,28 @@
+﻿# ── Frontend ──────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ── Backend ───────────────────────────────────────────────────────
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+*.pyc
+
+# ── Scratch / Temp ────────────────────────────────────────────────
+scratch/
+.pytest_cache/
+
+# ── OS / Editor ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ── Internal backup (frontend nested .git renamed during repo fix) ──
+frontend/_git_backup/
