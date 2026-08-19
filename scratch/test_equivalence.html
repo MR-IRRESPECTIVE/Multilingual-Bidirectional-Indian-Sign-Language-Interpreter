@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TFJS Equivalence Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+</head>
+<body>
+  <h1>Testing...</h1>
+  <div id="result"></div>
+  <script>
+    async function test() {
+      try {
+        const testRes = await fetch('./test_vector.json');
+        const testData = await testRes.json();
+        
+        const model = await tf.loadLayersModel('../poc/models/research-baseline/tfjs/model.json');
+        const inputTensor = tf.tensor2d([testData.input], [1, 42]);
+        
+        const output = model.predict(inputTensor);
+        const probs = output.dataSync();
+        
+        let maxProb = 0;
+        let maxClass = -1;
+        let maxDiff = 0;
+        
+        for (let i = 0; i < probs.length; i++) {
+          if (probs[i] > maxProb) { maxProb = probs[i]; maxClass = i; }
+          let diff = Math.abs(probs[i] - testData.output[i]);
+          if (diff > maxDiff) maxDiff = diff;
+        }
+        
+        document.getElementById('result').innerHTML = `
+          <h2>TFJS Result</h2>
+          Class: ${maxClass} <br>
+          Prob: ${maxProb.toFixed(6)} <br>
+          Max Diff from Numpy: ${maxDiff.toExponential(4)} <br>
+          Status: ${maxDiff < 1e-4 ? 'SUCCESS' : 'FAILURE'}
+        `;
+      } catch (err) {
+        document.getElementById('result').innerText = "ERROR: " + err.message;
+      }
+    }
+    test();
+  </script>
+</body>
+</html>

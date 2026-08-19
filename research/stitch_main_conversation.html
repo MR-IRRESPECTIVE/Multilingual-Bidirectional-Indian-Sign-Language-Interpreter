@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tactile ISL - Conversation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600;1,700;1,800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#d9e2ff",
+                        "on-tertiary-fixed-variant": "#6d390c",
+                        "surface-container": "#efeeea",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e4e2de",
+                        "surface": "#fbf9f5",
+                        "inverse-primary": "#82d3de",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed-dim": "#afc6ff",
+                        "surface-container-high": "#eae8e4",
+                        "tertiary": "#713d10",
+                        "primary-container": "#006d77",
+                        "primary-fixed-dim": "#82d3de",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001944",
+                        "on-primary-fixed-variant": "#004f56",
+                        "on-primary-container": "#9becf7",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f5f3ef",
+                        "surface-variant": "#e4e2de",
+                        "on-surface": "#1b1c1a",
+                        "error": "#ba1a1a",
+                        "outline": "#6f797a",
+                        "secondary-container": "#9bb8fe",
+                        "on-secondary-fixed-variant": "#254583",
+                        "inverse-surface": "#30312e",
+                        "inverse-on-surface": "#f2f0ed",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-tint": "#006972",
+                        "on-primary-fixed": "#001f23",
+                        "background": "#fbf9f5",
+                        "primary": "#00535b",
+                        "secondary": "#3f5d9c",
+                        "surface-dim": "#dbdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#9ff0fb",
+                        "on-surface-variant": "#3e494a",
+                        "on-tertiary-fixed": "#301400",
+                        "on-tertiary-container": "#ffd7bd",
+                        "tertiary-container": "#8e5426",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fbf9f5",
+                        "on-secondary-container": "#284785",
+                        "on-background": "#1b1c1a",
+                        "outline-variant": "#bec8ca"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "xl": "40px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "margin-mobile": "16px",
+                        "gutter": "20px",
+                        "xs": "4px",
+                        "margin-desktop": "48px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Atkinson Hyperlegible Next"],
+                        "body-md": ["Atkinson Hyperlegible Next"],
+                        "body-lg": ["Atkinson Hyperlegible Next"],
+                        "label-md": ["Atkinson Hyperlegible Next"],
+                        "label-lg": ["Atkinson Hyperlegible Next"],
+                        "headline-lg-mobile": ["Atkinson Hyperlegible Next"],
+                        "headline-lg": ["Atkinson Hyperlegible Next"],
+                        "display": ["Atkinson Hyperlegible Next"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-lg": ["20px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #fbf9f5; /* surface */
+            color: #1b1c1a; /* on-surface */
+            font-family: 'Atkinson Hyperlegible Next', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .skeuomorphic-surface {
+            background-color: #f5f3ef; /* surface-container-low */
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 2px 4px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e4e2de; /* surface-variant */
+            border-radius: 12px;
+        }
+
+        .skeuomorphic-button {
+            background-color: #00535b; /* primary */
+            color: #ffffff; /* on-primary */
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 2px 0 #004f56, /* on-primary-fixed-variant */
+                0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 8px;
+            transition: all 0.1s ease;
+        }
+
+        .skeuomorphic-button:active {
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.2),
+                0 0 0 transparent;
+            transform: translateY(2px);
+        }
+
+        .skeuomorphic-button-secondary {
+            background-color: #e4e2de; /* surface-variant */
+            color: #3e494a; /* on-surface-variant */
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 2px 0 #dbdad6, /* surface-dim */
+                0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #dbdad6;
+            border-radius: 8px;
+            transition: all 0.1s ease;
+        }
+
+        .skeuomorphic-button-secondary:active {
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                0 0 0 transparent;
+            transform: translateY(2px);
+            background-color: #dbdad6;
+        }
+
+        .skeuomorphic-input {
+            background-color: #ffffff; /* surface-container-lowest */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #bec8ca; /* outline-variant */
+            border-radius: 8px;
+        }
+
+        .skeuomorphic-input:focus {
+            border-color: #00535b; /* primary */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(0, 83, 91, 0.2);
+            outline: none;
+        }
+
+        .mic-pulsing {
+            animation: pulse-amber 2s infinite;
+            background-color: #ffdcc5; /* tertiary-fixed */
+            color: #713d10; /* tertiary */
+            border: 2px solid #8e5426; /* tertiary-container */
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                0 2px 0 #8e5426,
+                0 4px 12px rgba(255, 220, 197, 0.6);
+        }
+
+        @keyframes pulse-amber {
+            0% { box-shadow: 0 0 0 0 rgba(255, 183, 131, 0.7); } /* tertiary-fixed-dim */
+            70% { box-shadow: 0 0 0 20px rgba(255, 183, 131, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 183, 131, 0); }
+        }
+
+        .video-container {
+            border: 8px solid #30312e; /* inverse-surface */
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            background-color: #1b1c1a;
+            box-shadow: 
+                inset 0 4px 8px rgba(0,0,0,0.5),
+                0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Nav Hiding Logic for Desktop/Mobile */
+        @media (min-width: 768px) {
+            .mobile-bottom-nav { display: none !important; }
+            .main-content-wrapper { padding-left: 288px; /* 72 units */ }
+        }
+        @media (max-width: 767px) {
+            .desktop-side-nav { display: none !important; }
+            .top-app-bar { display: none !important; } /* Hidden on mobile when bottom nav is present */
+            .main-content-wrapper { padding-bottom: 80px; }
+            .split-layout { flex-direction: column; }
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- TopAppBar (Hidden on mobile) -->
+<header class="top-app-bar flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-16 z-50 bg-surface shadow-[0px_2px_0px_0px_rgba(0,0,0,0.1)] docked full-width top-0 hidden md:flex fixed">
+<div class="flex items-center gap-md text-headline-md font-headline-md font-extrabold text-primary">
+            Tactile ISL
+        </div>
+<div class="flex items-center gap-md">
+<button aria-label="Help" class="skeuomorphic-button-secondary p-sm flex items-center justify-center rounded-full">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="skeuomorphic-button px-md py-sm flex items-center gap-xs font-label-lg text-label-lg">
+                Emergency
+            </button>
+</div>
+</header>
+<!-- SideNavBar (Hidden on mobile) -->
+<nav class="desktop-side-nav flex flex-col h-full p-md z-[60] h-full w-72 fixed left-0 top-0 bg-surface-container border-r border-outline-variant shadow-xl mt-16 pt-lg">
+<div class="flex flex-col gap-lg flex-1">
+<div class="nav-links flex flex-col gap-sm">
+<!-- Home -->
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+                    Home
+                </a>
+<!-- Conversation (Active) -->
+<a class="flex items-center gap-md p-md text-on-primary-container bg-primary-container rounded-lg font-bold font-label-md text-label-md scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined fill" data-icon="forum" data-weight="fill">forum</span>
+                    Conversation
+                </a>
+<!-- Dictionary -->
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                    Dictionary
+                </a>
+<!-- Tutorials -->
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                    Tutorials
+                </a>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-sm border-t border-outline-variant pt-md">
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+                Support
+            </a>
+<button class="skeuomorphic-button w-full py-md mt-sm font-label-md text-label-md">
+                Upgrade to Pro
+            </button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="main-content-wrapper flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-20 px-margin-mobile md:px-margin-desktop pb-safe">
+<!-- Split Layout -->
+<div class="split-layout flex flex-1 gap-lg overflow-hidden h-full">
+<!-- Left Panel (Hearing User) -->
+<section class="flex-1 flex flex-col gap-md skeuomorphic-surface p-md md:p-lg h-full overflow-hidden">
+<div class="flex justify-between items-center mb-sm border-b border-outline-variant pb-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">Input</h2>
+<div class="flex items-center gap-sm">
+<select aria-label="Language Selector" class="skeuomorphic-input p-xs font-label-md text-label-md text-on-surface">
+<option value="en">English</option>
+<option value="hi">Hindi</option>
+</select>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-center items-center gap-lg">
+<!-- Tactile Microphone -->
+<button aria-label="Listening" class="mic-pulsing w-32 h-32 rounded-full flex flex-col items-center justify-center gap-sm transition-transform active:scale-95">
+<span class="material-symbols-outlined fill text-display font-display" style="font-size: 48px;">mic</span>
+<span class="font-label-md text-label-md font-bold">Listening...</span>
+</button>
+<!-- Live Transcription -->
+<div class="w-full mt-lg">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs block">Live Transcription</label>
+<div class="skeuomorphic-input p-md min-h-[120px] font-body-lg text-body-lg text-on-surface w-full bg-surface-container-lowest rounded-lg">
+                            I am looking for the hospital entrance...
+                        </div>
+</div>
+</div>
+</section>
+<!-- Right Panel (ISL User) -->
+<section class="flex-1 flex flex-col gap-md skeuomorphic-surface p-md md:p-lg h-full overflow-hidden">
+<div class="flex justify-between items-center mb-sm border-b border-outline-variant pb-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">Translation</h2>
+<div class="flex gap-sm">
+<span class="px-sm py-xs bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md text-xs flex items-center">ISL Output</span>
+</div>
+</div>
+<!-- Video Frame -->
+<div class="video-container flex-1 w-full flex items-center justify-center bg-inverse-surface">
+<div class="absolute inset-0 w-full h-full" data-alt="A highly detailed 3D animated character performing Indian Sign Language against a clean, neutral studio background. The lighting is soft and cinematic, highlighting the hands and facial expressions clearly. The style is modern, approachable, and slightly stylized, suitable for a professional accessibility application. High contrast and smooth shading." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBifoORr1Kf1-b6H85HO9c0uCjAJLBgFfWycGlX2Xp5RX6Hm2ELsbLrTL1zyJQY60LYapZ4WH3N8gs1jM1nu2NQg0wAMpuQsSk8-vvYYfR1wMP1VzcxIPt32-PxE1P4deDV4Zcck2L8BZTKTsBgZ42v2XSYlQiOhqkkLhV7oTcRsCAuuz9VrNi8aPBAPqRL7BZYVdoIKQwrzeG-th4N3TyEdo9NNynsEm4KZPbqKbkOoJTJPY0RCHY')"></div>
+<!-- Overlays -->
+<div class="absolute top-sm right-sm bg-surface/80 backdrop-blur-sm rounded-md px-sm py-xs flex items-center gap-xs font-label-md text-label-md text-on-surface shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span> Live
+                    </div>
+<!-- Controls Overlay (Bottom) -->
+<div class="absolute bottom-sm left-sm right-sm flex justify-center gap-md p-sm bg-surface/60 backdrop-blur-md rounded-xl mx-auto w-max shadow-md border border-outline-variant/50">
+<button aria-label="Replay" class="skeuomorphic-button-secondary w-10 h-10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">replay</span>
+</button>
+<button aria-label="Pause" class="skeuomorphic-button w-12 h-12 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined fill">pause</span>
+</button>
+<button aria-label="0.5x Speed" class="skeuomorphic-button-secondary w-10 h-10 rounded-full flex items-center justify-center font-label-md text-label-md font-bold">
+                            .5x
+                        </button>
+<button aria-label="Fullscreen" class="skeuomorphic-button-secondary w-10 h-10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Conversation History (Bottom Panel) -->
+<section class="mt-lg h-48 skeuomorphic-surface p-md flex flex-col shrink-0">
+<h3 class="font-label-lg text-label-lg text-on-surface mb-sm border-b border-outline-variant pb-xs">History</h3>
+<div class="flex-1 overflow-y-auto flex flex-col gap-sm pr-sm">
+<!-- Message Bubble -->
+<div class="flex flex-col gap-xs self-start max-w-[80%]">
+<div class="bg-surface-container-high text-on-surface p-sm rounded-lg rounded-tl-none shadow-sm font-body-md text-body-md border border-outline-variant">
+                        Excuse me, where is the pharmacy?
+                    </div>
+</div>
+<!-- ISL Response Indicator -->
+<div class="flex flex-col gap-xs self-end max-w-[80%] items-end">
+<div class="bg-primary-container text-on-primary-container p-sm rounded-lg rounded-tr-none shadow-sm font-body-md text-body-md border border-primary-fixed-dim flex items-center gap-sm">
+<span class="material-symbols-outlined text-sm">sign_language</span>
+                        [Signed Response Played]
+                    </div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="mobile-bottom-nav fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="translate">translate</span>
+<span class="font-label-md text-label-md text-xs mt-1">Translate</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 translate-y-[2px] shadow-none transition-all duration-100" href="#">
+<span class="material-symbols-outlined fill" data-icon="forum" data-weight="fill">forum</span>
+<span class="font-label-md text-label-md text-xs mt-1 font-bold">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="book">book</span>
+<span class="font-label-md text-label-md text-xs mt-1">Dict</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md text-xs mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

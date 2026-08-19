@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Phase 2B Human Validation POC</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9fafb; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+    h1 { margin-top: 0; }
+    .layout { display: flex; gap: 20px; width: 100%; max-width: 1200px; align-items: flex-start; }
+    .video-container { position: relative; width: 640px; height: 480px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    video { display: none; }
+    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    
+    .panel { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex: 1; }
+    .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; }
+    .stat-value { font-weight: bold; font-family: monospace; }
+    
+    .prediction-box { margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 8px; text-align: center; border: 1px solid #bfdbfe; }
+    .prediction-text { font-size: 24px; font-weight: bold; color: #1d4ed8; margin: 10px 0; }
+    
+    .test-mode { margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px; }
+    select, button { padding: 8px; border-radius: 4px; border: 1px solid #d1d5db; font-size: 14px; }
+    button { background: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #1d4ed8; }
+    .btn-secondary { background: #6b7280; }
+    .btn-secondary:hover { background: #4b5563; }
+    
+    .results-log { margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 14px; border: 1px solid #e5e7eb; background: #f9fafb; padding: 10px; font-family: monospace; }
+    .correct { color: green; font-weight: bold; }
+    .incorrect { color: red; font-weight: bold; }
+    
+    .instruction-panel { background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .instruction-panel h3 { margin-top: 0; color: #b45309; }
+    .instruction-panel ol { margin-bottom: 0; padding-left: 20px; }
+    .instruction-panel .important-note { color: #b91c1c; font-weight: bold; margin-top: 10px; font-size: 14px; }
+    
+    .dynamic-instruction { font-size: 18px; font-weight: bold; color: #047857; text-align: center; margin: 15px 0; padding: 10px; background: #d1fae5; border-radius: 8px; border: 1px solid #a7f3d0; }
+    
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    .stat-card { background: #f3f4f6; padding: 10px; border-radius: 4px; text-align: center; }
+    .stat-card .label { font-size: 12px; color: #6b7280; }
+    .stat-card .value { font-size: 18px; font-weight: bold; }
+    
+    .record-area { display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px; }
+    .current-result { text-align: center; font-size: 20px; font-weight: bold; min-height: 30px; }
+    
+    .hand-detected { color: green; font-weight: bold; }
+    .no-hand { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>PHYSICAL ISL TEST</h1>
+  
+  <div class="layout">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="instruction-panel">
+          <h3>HOW TO TEST</h3>
+          <ol>
+            <li>Select the sign you are going to perform.</li>
+            <li>Make sure your hand is visible.</li>
+            <li>Perform the sign naturally.</li>
+            <li>Hold the sign steady for a moment.</li>
+            <li>Wait for the stabilized prediction.</li>
+            <li>Press RECORD ATTEMPT.</li>
+            <li>Repeat.</li>
+          </ol>
+          <div class="important-note">
+            Important: The selected Expected Sign is NOT given to the AI model. It is only used to evaluate whether the model's prediction was correct.
+          </div>
+        </div>
+        
+        <div class="video-container">
+          <video id="input_video" width="640" height="480" autoplay playsinline></video>
+          <canvas id="output_canvas" width="640" height="480"></canvas>
+        </div>
+    </div>
+    
+    <div class="panel">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+          <span style="font-weight:bold; font-size: 16px;">Expected Sign:</span>
+          <select id="expected-sign" style="font-size: 16px; font-weight: bold; padding: 8px 12px;" onchange="updateInstruction()">
+            <option value="HELLO">HELLO</option>
+            <option value="SORRY">SORRY</option>
+            <option value="EAT/FOOD">EAT/FOOD</option>
+            <option value="INDIAN">INDIAN</option>
+            <option value="NAMASTE">NAMASTE</option>
+            <option value="THANK YOU">THANK YOU</option>
+            <option value="LOVE">LOVE</option>
+            <option value="GOOD">GOOD</option>
+            <option value="YES">YES</option>
+            <option value="NO">NO</option>
+          </select>
+      </div>
+      
+      <div id="dynamic-instruction" class="dynamic-instruction">
+        Perform the HELLO sign in front of the camera.
+      </div>
+      
+      <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="font-weight:bold; color:#4338ca; margin-bottom: 5px;">TFLite Model: <span id="model-status-text">Loading...</span></div>
+          <div style="font-size: 12px; color: #4b5563; font-family: monospace;" id="model-details">
+            URL: <span id="model-url">N/A</span><br>
+            Input: <span id="model-input-shape">N/A</span><br>
+            Output: <span id="model-output-shape">N/A</span>
+          </div>
+      </div>
+      
+      <div class="stat-row"><span>MediaPipe:</span> <span id="hand-status" class="no-hand">● Waiting for hand</span></div>
+      <div class="stat-row"><span>FPS:</span> <span id="fps-value" class="stat-value">0</span></div>
+      <div class="stat-row"><span>Inference:</span> <span id="latency-value" class="stat-value">0 ms</span></div>
+      
+      <div class="prediction-box">
+        <div style="font-size: 12px; color: #6b7280; font-weight:bold;">RAW PREDICTION</div>
+        <div id="raw-class" class="prediction-text" style="font-size: 18px; margin: 5px 0 15px 0; color: #4b5563;">WAITING...</div>
+        
+        <div style="font-size: 12px; color: #6b7280; font-weight:bold;">STABILIZED PREDICTION</div>
+        <div id="stabilized-prediction" class="prediction-text">WAITING...</div>
+        
+        <div style="font-size: 12px; color: #6b7280;">Model Score: <span id="raw-score">0.0%</span></div>
+      </div>
+
+      <div class="record-area">
+        <button onclick="recordTest()" style="font-size: 18px; padding: 12px;">RECORD ATTEMPT</button>
+        <div id="current-result" class="current-result"></div>
+      </div>
+
+      <div class="test-mode">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">SESSION RESULTS</h3>
+            <div>
+                <button class="btn-secondary" onclick="exportLog()" style="font-size: 12px; padding: 5px 10px;">Copy Log</button>
+                <button class="btn-secondary" onclick="resetSession()" style="font-size: 12px; padding: 5px 10px;">Reset</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Attempts</div>
+                <div class="value" id="stat-attempts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Accuracy</div>
+                <div class="value" id="stat-accuracy">N/A</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Correct</div>
+                <div class="value" id="stat-correct" style="color: green;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Incorrect</div>
+                <div class="value" id="stat-incorrect" style="color: red;">0</div>
+            </div>
+        </div>
+        
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Recent Attempts:</div>
+        <div class="results-log" id="test-results">
+          <!-- Log will appear here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    
+    // UI Elements
+    const fpsValue = document.getElementById('fps-value');
+    const latencyValue = document.getElementById('latency-value');
+    const stabilizedPred = document.getElementById('stabilized-prediction');
+    const rawScore = document.getElementById('raw-score');
+    const rawClass = document.getElementById('raw-class');
+    const testResults = document.getElementById('test-results');
+    const expectedSignInput = document.getElementById('expected-sign');
+    const handStatus = document.getElementById('hand-status');
+    const dynamicInstruction = document.getElementById('dynamic-instruction');
+    const currentResultDisplay = document.getElementById('current-result');
+    
+    const statAttempts = document.getElementById('stat-attempts');
+    const statAccuracy = document.getElementById('stat-accuracy');
+    const statCorrect = document.getElementById('stat-correct');
+    const statIncorrect = document.getElementById('stat-incorrect');
+
+    const LABELS = [
+      "0", "1", "2", "3", "4", "7", "8", "9", "hello", "sorry", 
+      "a", "b", "c", "d", "e", "f", "g", "h ", "i", "j", 
+      "k", "l", "p", "s ", "t", "u", "x", "y", "z", "eat/food", 
+      "indian", "hearing", "namaste", "thank you", "love", "house", "practice", "good", "no", "yes", "null"
+    ];
+
+    let tfjsModel = null;
+    const PREDICTION_WINDOW_SIZE = 5;
+    let predictionHistory = [];
+    
+    let frameCount = 0;
+    let lastFpsTime = performance.now();
+    let currentStabilizedLabel = "WAITING...";
+    let currentRawLabel = "WAITING...";
+    
+    // Session state
+    let sessionAttempts = 0;
+    let sessionCorrect = 0;
+    let sessionIncorrect = 0;
+    let logHistory = []; // to store text for copying
+
+    function updateInstruction() {
+        const sign = expectedSignInput.value;
+        dynamicInstruction.innerText = `Perform the ${sign} sign in front of the camera.`;
+        currentResultDisplay.innerText = "";
+    }
+
+    const modelStatusText = document.getElementById('model-status-text');
+    const modelUrlText = document.getElementById('model-url');
+    const modelInputShapeText = document.getElementById('model-input-shape');
+    const modelOutputShapeText = document.getElementById('model-output-shape');
+
+    async function initModel() {
+      const modelUrl = './models/research-baseline/tfjs/model.json';
+      modelUrlText.innerText = modelUrl;
+      try {
+        const startLoad = performance.now();
+        modelStatusText.innerText = "Downloading TFJS model...";
+        
+        tfjsModel = await tf.loadLayersModel(modelUrl);
+        const endLoad = performance.now();
+        
+        modelStatusText.innerHTML = "✓ Loaded (" + (endLoad - startLoad).toFixed(1) + "ms)";
+        modelStatusText.style.color = "green";
+        
+        // Inspect model
+        const inputs = tfjsModel.inputs;
+        const outputs = tfjsModel.outputs;
+        
+        if (inputs && inputs.length > 0) {
+            modelInputShapeText.innerText = JSON.stringify(inputs[0].shape);
+        }
+        if (outputs && outputs.length > 0) {
+            modelOutputShapeText.innerText = JSON.stringify(outputs[0].shape) + ` (${outputs[0].shape[1]} classes)`;
+        }
+        
+      } catch (err) {
+        console.error('Model Load Error', err);
+        modelStatusText.innerHTML = "✗ Failed: " + err.message;
+        modelStatusText.style.color = "red";
+      }
+    }
+
+    function preProcessLandmarks(landmarks, imageWidth, imageHeight) {
+      let temp = [];
+      let bx = 0, by = 0;
+      for (let i = 0; i < landmarks.length; i++) {
+        let lx = Math.min(Math.floor(landmarks[i].x * imageWidth), imageWidth - 1);
+        let ly = Math.min(Math.floor(landmarks[i].y * imageHeight), imageHeight - 1);
+        if (i === 0) { bx = lx; by = ly; }
+        temp.push(lx - bx);
+        temp.push(ly - by);
+      }
+      let max_val = Math.max(...temp.map(Math.abs)) || 1;
+      return temp.map(v => v / max_val);
+    }
+
+    function getMajorityVote(history) {
+        if (history.length === 0) return "WAITING...";
+        const counts = {};
+        let maxCount = 0;
+        let maxLabel = "WAITING...";
+        for (const label of history) {
+            counts[label] = (counts[label] || 0) + 1;
+            if (counts[label] > maxCount) {
+                maxCount = counts[label];
+                maxLabel = label;
+            }
+        }
+        return maxLabel;
+    }
+
+    async function onResults(results) {
+      // FPS calculation
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsTime >= 1000) {
+        fpsValue.innerText = frameCount;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+      
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        handStatus.innerText = "● Hand detected";
+        handStatus.className = "hand-detected";
+        
+        for (const landmarks of results.multiHandLandmarks) {
+          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+          drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1});
+          
+          if (tfjsModel) {
+            const processed = preProcessLandmarks(landmarks, canvasElement.width, canvasElement.height);
+            const inputTensor = tf.tensor2d([processed], [1, 42]);
+            
+            // Measure latency
+            const startInference = performance.now();
+            const outputTensor = tfjsModel.predict(inputTensor);
+            const probabilities = outputTensor.dataSync();
+            const endInference = performance.now();
+            
+            latencyValue.innerText = (endInference - startInference).toFixed(1) + ' ms';
+            
+            let maxProb = 0;
+            let maxIndex = -1;
+            for(let i=0; i<probabilities.length; i++) {
+                if(probabilities[i] > maxProb) {
+                    maxProb = probabilities[i];
+                    maxIndex = i;
+                }
+            }
+
+            let label = "UNKNOWN";
+            if (maxProb >= 0.5) {
+                label = LABELS[maxIndex] || "UNKNOWN";
+            }
+            
+            currentRawLabel = label.toUpperCase();
+            
+            rawScore.innerText = (maxProb * 100).toFixed(1) + '%';
+            rawClass.innerText = currentRawLabel;
+            
+            predictionHistory.push(currentRawLabel);
+            if (predictionHistory.length > PREDICTION_WINDOW_SIZE) {
+                predictionHistory.shift();
+            }
+
+            currentStabilizedLabel = getMajorityVote(predictionHistory);
+            stabilizedPred.innerText = currentStabilizedLabel;
+
+            inputTensor.dispose();
+            outputTensor.dispose();
+          }
+        }
+      } else {
+        handStatus.innerText = "● Waiting for hand";
+        handStatus.className = "no-hand";
+        predictionHistory = [];
+        currentStabilizedLabel = "WAITING...";
+        currentRawLabel = "WAITING...";
+        stabilizedPred.innerText = currentStabilizedLabel;
+        rawScore.innerText = "0.0%";
+        rawClass.innerText = "WAITING...";
+      }
+      canvasCtx.restore();
+    }
+
+    function recordTest() {
+      if (currentStabilizedLabel === "WAITING..." || currentStabilizedLabel === "UNKNOWN") {
+          currentResultDisplay.innerHTML = `<span style="color:#d97706;">No valid prediction to record.</span>`;
+          return;
+      }
+      
+      const expected = expectedSignInput.value;
+      const predicted = currentStabilizedLabel;
+      const isCorrect = (expected === predicted);
+      
+      sessionAttempts++;
+      if (isCorrect) sessionCorrect++;
+      else sessionIncorrect++;
+      
+      updateSessionStats();
+      
+      const statusClass = isCorrect ? 'correct' : 'incorrect';
+      const statusText = isCorrect ? '✓' : '✗';
+      const statusWord = isCorrect ? 'PASS' : 'FAIL';
+      
+      // Update Current Result display
+      currentResultDisplay.innerHTML = `<span class="${statusClass}">${statusWord}</span>`;
+      
+      // Update Log
+      const logEntryHtml = `<div>${sessionAttempts}. ${expected} → ${predicted} <span class="${statusClass}">${statusText}</span></div>`;
+      testResults.innerHTML = logEntryHtml + testResults.innerHTML; // Prepend
+      
+      // For clipboard
+      logHistory.push(`${sessionAttempts}. Expected: ${expected} | Predicted: ${predicted} | Result: ${statusWord}`);
+    }
+    
+    function updateSessionStats() {
+        statAttempts.innerText = sessionAttempts;
+        statCorrect.innerText = sessionCorrect;
+        statIncorrect.innerText = sessionIncorrect;
+        
+        if (sessionAttempts > 0) {
+            const acc = (sessionCorrect / sessionAttempts) * 100;
+            statAccuracy.innerText = acc.toFixed(1) + '%';
+        } else {
+            statAccuracy.innerText = 'N/A';
+        }
+    }
+    
+    function resetSession() {
+        sessionAttempts = 0;
+        sessionCorrect = 0;
+        sessionIncorrect = 0;
+        logHistory = [];
+        testResults.innerHTML = '';
+        currentResultDisplay.innerText = '';
+        updateSessionStats();
+    }
+    
+    function exportLog() {
+        if (logHistory.length === 0) {
+            alert("No logs to copy.");
+            return;
+        }
+        const text = logHistory.join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Test log copied to clipboard!");
+        }).catch(err => {
+            alert("Failed to copy log. See console.");
+            console.error(err);
+        });
+    }
+
+    const hands = new Hands({locateFile: (file) => {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+    }});
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    hands.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await hands.send({image: videoElement}); },
+      width: 640, height: 480
+    });
+    
+    camera.start().then(() => { initModel(); });
+    
+    // Initialize instruction
+    updateInstruction();
+  </script>
+</body>
+</html>
