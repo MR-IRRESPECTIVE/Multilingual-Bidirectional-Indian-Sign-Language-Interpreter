@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import numpy as np
 import tensorflow as tf
@@ -22,7 +22,7 @@ def load_and_prepare_data(export_dir):
                 if sample.get("feature_generation") != "v2-86":
                     continue
                 frames = sample.get("frames", [])
-                if len(frames) != 30:
+                if len(frames) != 29:
                     continue
                 
                 # Check dimensions and nans
@@ -127,7 +127,7 @@ def main():
     print(f"Classes found: {len(class_map)} -> {class_map}")
     
     num_classes = max(class_map.keys()) + 1
-    input_shape = (30, 86)
+    input_shape = (29, 86)
     
     model = build_model(input_shape, num_classes)
     model.summary()

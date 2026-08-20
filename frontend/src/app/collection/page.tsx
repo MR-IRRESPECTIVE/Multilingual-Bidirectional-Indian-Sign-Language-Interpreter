@@ -28,7 +28,7 @@ const MVP_SIGNS: Sign[] = [
   { id: 30, label: "Indian",     type: "Dynamic", hands: "one" },
   { id: 32, label: "Namaste",    type: "Static",  hands: "two" },  // Ratio-based two-hand enforcement
   { id: 33, label: "Thank You",  type: "Dynamic", hands: "one" },
-  { id: 34, label: "Love",       type: "Dynamic", hands: "one" },
+  { id: 34, label: "Love",       type: "Dynamic", hands: "two" },
   { id: 37, label: "Good",       type: "Dynamic", hands: "one" },
   { id: 39, label: "Yes",        type: "Dynamic", hands: "one" },
   { id: 38, label: "No",         type: "Dynamic", hands: "one" },

@@ -16,7 +16,7 @@ def test_model_state_unavailable():
     assert data["loaded"] is False
     assert data["status"] == "waiting_for_model"
 
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(29)]
     response = client.post(ENDPOINT, json={"frames": frames})
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "MODEL_NOT_READY"
@@ -42,7 +42,7 @@ def test_prediction_above_threshold(monkeypatch):
     monkeypatch.setattr(model_service, "mock_prediction_confidence", 0.95)
     monkeypatch.setattr(recognition_service, "threshold", 0.70)
     
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(29)]
     response = client.post(ENDPOINT, json={"frames": frames})
     assert response.status_code == 200
     data = response.json()
@@ -59,7 +59,7 @@ def test_prediction_below_threshold(monkeypatch):
     monkeypatch.setattr(model_service, "mock_prediction_confidence", 0.45)
     monkeypatch.setattr(recognition_service, "threshold", 0.70)
     
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(29)]
     response = client.post(ENDPOINT, json={"frames": frames})
     assert response.status_code == 200
     data = response.json()
@@ -75,7 +75,7 @@ def test_prediction_exactly_at_threshold(monkeypatch):
     monkeypatch.setattr(model_service, "mock_prediction_confidence", 0.70)
     monkeypatch.setattr(recognition_service, "threshold", 0.70)
     
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(29)]
     response = client.post(ENDPOINT, json={"frames": frames})
     assert response.status_code == 200
     data = response.json()
@@ -90,7 +90,7 @@ def test_metadata_mismatch_exception_handling(monkeypatch):
     monkeypatch.setattr(model_service, "predict", raise_mismatch)
     monkeypatch.setattr(model_service, "is_loaded", lambda: True)
     
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(29)]
     response = client.post(ENDPOINT, json={"frames": frames})
     assert response.status_code == 500
     assert response.json()["error"]["code"] == "MODEL_METADATA_MISMATCH"

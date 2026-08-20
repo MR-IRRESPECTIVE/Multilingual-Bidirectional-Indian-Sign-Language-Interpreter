@@ -35,7 +35,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     code = "INVALID_INPUT"
     if errors:
         msg = errors[0].get("msg", str(exc))
-        if "Exactly 30 frames required" in msg:
+        if "Exactly 29 frames required" in msg:
             code = "INVALID_FRAME_SHAPE"
         elif "exactly 86 features" in msg:
             code = "INVALID_FEATURE_DIMENSION"

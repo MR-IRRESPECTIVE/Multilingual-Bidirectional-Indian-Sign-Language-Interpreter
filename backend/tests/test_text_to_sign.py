@@ -147,7 +147,7 @@ def test_existing_health_still_works():
 
 def test_existing_translate_sign_still_works():
     """Regression: existing sign-to-text endpoint correctly enforces model readiness."""
-    valid_frames = [[0.0] * 86 for _ in range(30)]
+    valid_frames = [[0.0] * 86 for _ in range(29)]
     response = client.post("/api/translate/sign", json={"frames": valid_frames})
     assert response.status_code == 503
     data = response.json()

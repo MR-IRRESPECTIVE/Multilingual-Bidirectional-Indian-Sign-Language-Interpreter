@@ -70,7 +70,7 @@ def validate_dataset(filepath):
             invalid_samples += 1
         
         frames = sample["frames"]
-        if len(frames) != 30:
+        if len(frames) != 29:
             shape_errors += 1
             invalid_samples += 1
         else:

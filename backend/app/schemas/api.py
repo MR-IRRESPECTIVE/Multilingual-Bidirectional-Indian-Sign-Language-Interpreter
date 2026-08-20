@@ -72,20 +72,20 @@ class DetailedModelStatusResponse(BaseModel):
     model_version: Optional[str] = None
     feature_generation: str = "v2-86"
     feature_dimension: int = 86
-    frame_count: int = 30
+    frame_count: int = 29
     classes: List[dict] = Field(default_factory=list)
     status: str = "waiting_for_model"
 
 # --- Requests ---
 
 class TranslationRequest(BaseModel):
-    frames: List[List[float]] = Field(..., description="Sequence of 30 frames, each containing 86 numeric features.")
+    frames: List[List[float]] = Field(..., description="Sequence of 29 frames, each containing 86 numeric features.")
 
     @field_validator("frames")
     @classmethod
     def validate_frames(cls, frames: List[List[float]]) -> List[List[float]]:
-        if len(frames) != 30:
-            raise InvalidFrameDimensionError(f"Exactly 30 frames required, got {len(frames)}.")
+        if len(frames) != 29:
+            raise InvalidFrameDimensionError(f"Exactly 29 frames required, got {len(frames)}.")
         
         for i, frame in enumerate(frames):
             if len(frame) != 86:

@@ -40,7 +40,7 @@ def merge_datasets(input_files, output_file):
         "metadata": {
             "feature_generation": global_feature_gen,
             "feature_dimension": 86,
-            "frame_count": 30,
+            "frame_count": 29,
             "total_samples": len(all_samples)
         },
         "dataset": all_samples

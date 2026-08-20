@@ -48,7 +48,7 @@ class ModelService(ABC):
     @abstractmethod
     def predict(self, frames: List[List[float]]) -> PredictionResult:
         """
-        Takes 30x86 frames and returns a PredictionResult.
+        Takes 29x86 frames and returns a PredictionResult.
         Throws ModelNotReadyError if not loaded.
         Throws PredictionError if inference fails.
         """
@@ -63,7 +63,7 @@ class MockModelService(ModelService):
             model_version=self._version,
             feature_generation="v2-86",
             feature_dimension=86,
-            frame_count=30,
+            frame_count=29,
             classes=[
                 {"id": "mock_sign", "label": "MOCK_SIGN"},
                 {"id": "hello", "label": "Hello"},
@@ -136,13 +136,13 @@ class TensorFlowModelService(ModelService):
                 
             input_shape = raw_meta.get("input_shape", [])
             if len(input_shape) >= 2:
-                # Handle varying shapes like [None, 30, 86] or [30, 86]
+                # Handle varying shapes like [None, 29, 86] or [29, 86]
                 frame_count = input_shape[-2]
                 feature_dim = input_shape[-1]
-                if frame_count != 30 or feature_dim != 86:
-                    raise ModelMetadataMismatchError(f"Expected shape [..., 30, 86], got {input_shape}")
+                if frame_count != 29 or feature_dim != 86:
+                    raise ModelMetadataMismatchError(f"Expected shape [..., 29, 86], got {input_shape}")
             else:
-                frame_count = 30
+                frame_count = 29
                 feature_dim = 86
                 
             # Handle legacy class map vs structured list
