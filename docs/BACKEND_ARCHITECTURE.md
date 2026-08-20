@@ -1,54 +1,31 @@
-﻿# ISL Translation Backend Architecture
+# Backend Architecture
 
-## Overview
-This backend serves as the bridge between the React/Next.js frontend (data collection & streaming) and the future TensorFlow ML translation model.
+The backend is built using FastAPI, providing a bidirectional translation pipeline for Indian Sign Language (ISL).
 
-**Framework**: Python + FastAPI
-**Data Validation**: Pydantic
-**Current ML State**: MOCK_MODEL (Awaiting real TensorFlow deployment)
-**Persistence**: In-Memory (No database required yet)
+## Core Components
 
-## Architecture
+1. **Main \& Routers**
+   - `main.py`: The entry point of the FastAPI application. Configures CORS, registers global exception handlers, and mounts API routers.
+   - `api/endpoints.py`: Defines all API endpoints (/health, /ready, /model/status, /translate/sign, /history, /translate/text-to-sign) and delegates logic to services.
 
-The backend follows a modular, scalable pattern:
-- **`app/api/endpoints.py`**: Defines HTTP routes and API contracts.
-- **`app/core/config.py`**: Environment variables supporting dynamic CORS domains (e.g., `FRONTEND_URLS`).
-- **`app/core/exceptions.py`**: Custom mapped validation and model errors.
-- **`app/schemas/api.py`**: Pydantic schemas standardizing requests and responses, enforcing strict validation logic (e.g., exactly 30 frames, 86 numeric features).
-- **`app/services/model_service.py`**: Abstraction layer allowing us to hot-swap models without modifying API routes.
-    - `ModelService` (Base Interface)
-    - `MockModelService` (Current MVP)
-    - `TensorFlowModelService` (Future implementation)
-- **`app/services/history_service.py`**: In-memory repository handling translation history.
+2. **Services**
+   - `RecognitionService` (`recognition_service.py`): Orchestrates sign recognition. Injects the underlying ModelService. Applies confidence thresholds (cMODEL_CONFIDENCE_THRESHOLD`).
+   - `ModelService`(trait) ( `model_service.py`): Abstracts model inference.
+     - `MockModelService`: Used for development and testing. Returns mock predictions.
+     - `TensorFlowModelService`: The production model service. Lazily loads TensorFlow and the `.tflite`/`.keras` model when started.
+   - `TextToSignService` (`text_translation_service.py`): Handles Text Translation to ISL video mapping, using a static dictionary (`sign_dictionary.py`).
+   - `HistoryService` (`history_service.py`): An in-memory store for translation history.
 
-## Running the Application
+3. **Error Handling**
+   - `exceptions.py`: Defines hierarchical custom exceptions based on `ISLAPIError`.
+   - These exceptions are caught by `global_exception_handler` in `main.py` and mapped to standardized JSON error responses.
 
-### 1. Prerequisites
-- Python 3.10+
-- Virtual Environment recommended
+4. **Schemas:**
+   - `api.py`: Defines all Pydantic models for requests and responses.
+   - Includes custom validation for frame shape (30x 86).
 
-### 2. Installation
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate      # Windows
-# source venv/bin/activate # Mac/Linux
+## Dataset Preparation
+The backend includes tools to validate and merge Indian Sign Language JSON datasets.
 
-pip install -r requirements.txt
-```
-
-### 3. Running Locally
-```bash
-cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-By default, CORS is allowed for `http://localhost:3000` and `http://127.0.0.1:3000`. You can override this using the `FRONTEND_URLS` environment variable (comma-separated).
-
-## For Frontend Developers
-Please reference [API_CONTRACT.md](./API_CONTRACT.md) for the exact payload structures, status codes, error shapes, and interaction flows.
-
-## Future ML/Database Integration Plan
-1. Introduce a proper relational database (e.g., PostgreSQL) or Document store (e.g., MongoDB).
-2. Create `app/models/` for ORM/ODM definitions.
-3. Replace `MockModelService` with `TensorFlowModelService`.
-4. The API endpoints and response schemas will remain structurally identical.
+- `scripts/dataset_validator.py`: Reads a single JSON export and checks for shape (30x86), missing fields, duplicates, signer conflicts, and NaNs/Infinity.
+- `scripts/dataset_merger.py`: Takes multiple JSON exports, runs the validator, and merges them into a single master dataset for TensorFlow training.

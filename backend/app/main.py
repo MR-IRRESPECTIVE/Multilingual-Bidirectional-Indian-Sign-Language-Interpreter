@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -9,7 +9,9 @@ from app.core.exceptions import (
     ModelNotReadyError, 
     PredictionError, 
     InvalidFrameDimensionError, 
-    InvalidFeatureError
+    InvalidFeatureError,
+    EmptyInputError,
+    ModelMetadataMismatchError
 )
 
 app = FastAPI(
@@ -20,7 +22,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.FRONTEND_URLS,
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,12 +35,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     code = "INVALID_INPUT"
     if errors:
         msg = errors[0].get("msg", str(exc))
-        # Pydantic v2 swallows our custom Exception type in the traceback, 
-        # so we can deduce the code from the message format we provided.
-        if "Exactly 30 frames required" in msg or "must contain exactly 86 features" in msg:
-            code = "INVALID_FRAME_DIMENSION"
+        if "Exactly 30 frames required" in msg:
+            code = "INVALID_FRAME_SHAPE"
+        elif "exactly 86 features" in msg:
+            code = "INVALID_FEATURE_DIMENSION"
+        elif "invalid (NaN, Infinity" in msg or "Non-finite" in msg or "valid number" in msg:
+            code = "NON_FINITE_FEATURES"
+        elif "Input text cannot be empty" in msg:
+            code = "EMPTY_INPUT"
             
-    # For robust handling, we strip the 'Value error, ' prefix added by Pydantic
     if msg.startswith("Value error, "):
         msg = msg[len("Value error, "):]
         
@@ -79,6 +84,32 @@ async def prediction_error_handler(request: Request, exc: PredictionError):
         }
     )
 
+@app.exception_handler(EmptyInputError)
+async def empty_input_handler(request: Request, exc: EmptyInputError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "success": False,
+            "error": {
+                "code": "EMPTY_INPUT",
+                "message": str(exc)
+            }
+        }
+    )
+
+@app.exception_handler(ModelMetadataMismatchError)
+async def model_metadata_mismatch_handler(request: Request, exc: ModelMetadataMismatchError):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "success": False,
+            "error": {
+                "code": "MODEL_METADATA_MISMATCH",
+                "message": str(exc)
+            }
+        }
+    )
+
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
@@ -86,7 +117,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={
             "success": False,
             "error": {
-                "code": "INTERNAL_SERVER_ERROR",
+                "code": "INTERNAL_ERROR",
                 "message": "An unexpected internal server error occurred."
             }
         }

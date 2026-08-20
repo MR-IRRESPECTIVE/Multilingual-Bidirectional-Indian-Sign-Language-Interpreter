@@ -1,4 +1,4 @@
-﻿import math
+import math
 from typing import List, Optional, Any
 from pydantic import BaseModel, Field, field_validator
 from app.core.exceptions import InvalidFrameDimensionError, InvalidFeatureError
@@ -44,10 +44,37 @@ class HistoryEntry(BaseModel):
     timestamp: str
     prediction: str
     confidence: float
+    model_version: Optional[str] = None
+    direction: Optional[str] = None
+    metadata: Optional[dict] = None
 
 class HistoryResponse(BaseModel):
     success: bool = True
     history: List[HistoryEntry]
+
+class SignPrediction(BaseModel):
+    sign_id: Optional[str] = None
+    label: str
+    confidence: float
+
+class ModelInfo(BaseModel):
+    version: Optional[str] = None
+    feature_generation: str = "v2-86"
+
+class SignRecognitionResponse(BaseModel):
+    success: bool = True
+    prediction: SignPrediction
+    model: ModelInfo
+
+class DetailedModelStatusResponse(BaseModel):
+    success: bool = True
+    loaded: bool = False
+    model_version: Optional[str] = None
+    feature_generation: str = "v2-86"
+    feature_dimension: int = 86
+    frame_count: int = 30
+    classes: List[dict] = Field(default_factory=list)
+    status: str = "waiting_for_model"
 
 # --- Requests ---
 
@@ -69,3 +96,29 @@ class TranslationRequest(BaseModel):
                     raise InvalidFeatureError(f"Feature at frame {i}, index {j} is invalid (NaN, Infinity, or not a number).")
                     
         return frames
+
+# --- Text-to-Sign Schemas ---
+
+class TextToSignRequest(BaseModel):
+    text: str = Field(..., description="Text to translate into ISL signs.")
+    
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, text: str) -> str:
+        if not text or not text.strip():
+            from app.core.exceptions import EmptyInputError
+            raise EmptyInputError("Input text cannot be empty.")
+        return text
+
+class SignData(BaseModel):
+    id: str
+    label: str
+    video_url: str
+
+class TextToSignResponse(BaseModel):
+    success: bool = True
+    input_text: str
+    normalized_text: str
+    gloss: List[str]
+    signs: List[SignData]
+    unsupported_words: List[str] = Field(default_factory=list)

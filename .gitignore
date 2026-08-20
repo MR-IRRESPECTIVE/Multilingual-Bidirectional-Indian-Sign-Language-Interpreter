@@ -26,3 +26,9 @@ Thumbs.db
 
 # ── Internal backup (frontend nested .git renamed during repo fix) ──
 frontend/_git_backup/
+
+# ── Models ────────────────────────────────────────────────────────
+models/
+
+# Dataset Exports
+datasets/pilot/exports/*.json

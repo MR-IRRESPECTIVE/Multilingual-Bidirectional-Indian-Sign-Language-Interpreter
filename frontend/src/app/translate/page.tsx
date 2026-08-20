@@ -1,27 +1,62 @@
 'use client';
 
-import { useState } from 'react';
-import { mockTranslateTextToISL } from '@/lib/api/mockService';
-import AvatarPlaceholder from '@/components/isl/AvatarPlaceholder';
+import { useState, useEffect } from 'react';
+import { SignData, TextToSignResponse } from '@/types';
+import { apiPost, ApiError } from '@/lib/api/apiClient';
+import SignVideoPlayer from '@/components/isl/SignVideoPlayer';
+import { useVoiceInput } from '@/lib/speech/useVoiceInput';
 
 export default function TranslatePage() {
   const [inputText, setInputText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [signs, setSigns] = useState<SignData[]>([]);
   const [gloss, setGloss] = useState<string[]>([]);
+  const [unsupportedWords, setUnsupportedWords] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [hasTranslated, setHasTranslated] = useState(false);
+  
+  const voice = useVoiceInput();
+  
+  // When voice transcript arrives, populate the text input
+  useEffect(() => {
+    if (voice.transcript) {
+      setInputText(voice.transcript);
+    }
+  }, [voice.transcript]);
   
   const handleTranslate = async () => {
     if (!inputText.trim()) return;
     
     setIsTranslating(true);
+    setError(null);
+    setSigns([]);
     setGloss([]);
+    setUnsupportedWords([]);
     
     try {
-      const response = await mockTranslateTextToISL(inputText);
+      const response = await apiPost<TextToSignResponse>(
+        '/api/translate/text-to-sign',
+        { text: inputText }
+      );
+      setSigns(response.signs);
       setGloss(response.gloss);
-    } catch (error) {
-      console.error(error);
+      setUnsupportedWords(response.unsupported_words || []);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsTranslating(false);
+      setHasTranslated(true);
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleTranslate();
     }
   };
 
@@ -51,14 +86,33 @@ export default function TranslatePage() {
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type a sentence to translate..."
             className="flex-grow min-h-[200px] p-4 bg-gray-50 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
           ></textarea>
           
           <div className="flex justify-between items-center mt-auto">
-            <button className="p-3 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
-              <span className="material-symbols-outlined">mic</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={voice.isListening ? voice.stopListening : voice.startListening}
+                disabled={!voice.isSupported}
+                className={`p-3 rounded-full transition-colors ${
+                  voice.isListening
+                    ? 'bg-red-500 text-white animate-pulse'
+                    : voice.isSupported
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+                title={!voice.isSupported ? 'Speech recognition not available in this browser' : voice.isListening ? 'Stop listening' : 'Start voice input'}
+              >
+                <span className="material-symbols-outlined">
+                  {voice.isListening ? 'mic' : 'mic'}
+                </span>
+              </button>
+              {voice.isListening && (
+                <span className="text-sm text-red-500 font-medium">Listening...</span>
+              )}
+            </div>
             <button 
               onClick={handleTranslate}
               disabled={!inputText.trim() || isTranslating}
@@ -71,6 +125,11 @@ export default function TranslatePage() {
               )}
             </button>
           </div>
+          
+          {/* Voice error message */}
+          {voice.error && (
+            <p className="text-sm text-red-500 mt-1">{voice.error}</p>
+          )}
         </div>
 
         {/* Output Side */}
@@ -82,18 +141,51 @@ export default function TranslatePage() {
             </h2>
           </div>
           
-          <div className="flex-grow flex flex-col items-center justify-center gap-6 z-10">
-            {gloss.length > 0 ? (
-              <>
-                <div className="w-full max-w-[280px]">
-                  <AvatarPlaceholder activeGloss={gloss} />
+          <div className="flex-grow flex flex-col items-center justify-center gap-4 z-10">
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 w-full text-center">
+                <span className="material-symbols-outlined text-3xl text-red-400 mb-2">report_problem</span>
+                <p className="text-red-300">{error}</p>
+              </div>
+            )}
+            
+            {/* Success: Signs found */}
+            {!error && hasTranslated && signs.length > 0 && (
+              <SignVideoPlayer signs={signs} />
+            )}
+            
+            {/* Success: No signs found at all */}
+            {!error && hasTranslated && signs.length === 0 && unsupportedWords.length > 0 && (
+              <div className="flex flex-col items-center text-gray-400 p-6 text-center">
+                <span className="material-symbols-outlined text-5xl mb-3">search_off</span>
+                <p className="font-semibold text-lg">No signs available</p>
+                <p className="text-sm text-gray-500 mt-1">None of the entered words have ISL signs recorded yet.</p>
+              </div>
+            )}
+            
+            {/* Unsupported words notice */}
+            {!error && hasTranslated && unsupportedWords.length > 0 && (
+              <div className="bg-white/5 rounded-xl p-4 w-full">
+                <p className="text-sm text-gray-400 mb-2">
+                  <span className="material-symbols-outlined text-sm align-middle mr-1">info</span>
+                  Words not yet available:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {unsupportedWords.map((word, idx) => (
+                    <span
+                      key={word + '-' + idx}
+                      className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm font-mono"
+                    >
+                      {word}
+                    </span>
+                  ))}
                 </div>
-                <div className="bg-white/10 p-4 rounded-xl w-full text-center">
-                  <p className="text-sm text-gray-400 mb-1">Generated ISL Gloss</p>
-                  <p className="font-mono text-yellow-300 font-bold tracking-wide">{gloss.join(' - ')}</p>
-                </div>
-              </>
-            ) : (
+              </div>
+            )}
+            
+            {/* Empty State (no translation attempted) */}
+            {!error && !hasTranslated && (
               <div className="flex flex-col items-center text-gray-500 opacity-60">
                 <span className="material-symbols-outlined text-6xl mb-4">accessibility</span>
                 <p>Enter text to see ISL translation</p>
