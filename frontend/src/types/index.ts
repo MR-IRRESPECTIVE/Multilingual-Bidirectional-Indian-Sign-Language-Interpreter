@@ -26,7 +26,7 @@ export type SpeechState = 'idle' | 'requesting' | 'listening' | 'processing' | '
 export interface SignData {
   id: string;
   label: string;
-  video_url: string;
+  video_url?: string;
 }
 
 export interface TextToSignResponse {

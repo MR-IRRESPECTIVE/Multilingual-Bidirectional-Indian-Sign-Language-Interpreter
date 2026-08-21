@@ -1,0 +1,38 @@
+{
+  "atharv_keypoint_csv": {
+    "rows_before_dedup": 14090,
+    "rows_after_dedup": 14090
+  },
+  "atharv_keypoint_3_csv": {
+    "rows_before_dedup": 8026,
+    "rows_after_dedup": 8026
+  },
+  "maitree_keypoint_csv": {
+    "rows_before_dedup": 7669,
+    "rows_after_dedup": 5803
+  },
+  "total_samples": 27919,
+  "total_classes": 13,
+  "class_distribution": {
+    "digit_0": 2102,
+    "digit_1": 1923,
+    "digit_2": 2152,
+    "digit_3": 1849,
+    "digit_4": 2402,
+    "digit_7": 2121,
+    "digit_8": 3164,
+    "digit_9": 1814,
+    "hello": 2426,
+    "sorry": 2163,
+    "A": 2398,
+    "B": 2206,
+    "C": 1199
+  },
+  "feature_dimension": 42,
+  "duplicate_rows_removed": 1866,
+  "preprocessing": "wrist_relative_max_abs_normalized_xy_only_21landmarks",
+  "source_repos": [
+    "atharvsp189/Bidirectional-Indian-Sign-Language-Translator",
+    "MaitreeVaria/Indian-Sign-Language-Detection"
+  ]
+}

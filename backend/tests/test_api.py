@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
-
 import math
 import pytest
+import os
+
+os.environ["ENVIRONMENT"] = "test"
 
 from app.main import app
 from app.core.exceptions import ModelNotReadyError, PredictionError
@@ -35,7 +37,7 @@ def test_valid_translation_request(monkeypatch):
     # Force the mock model to be "loaded" so it answers predictions
     monkeypatch.setattr(model_service, "_should_load", True)
     
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 200
     data = response.json()
@@ -44,7 +46,7 @@ def test_valid_translation_request(monkeypatch):
     assert data["model"]["version"] == "mock-v1"
 
 def test_invalid_frame_count_under():
-    frames = [[0.5] * 86 for _ in range(28)]
+    frames = [[0.5] * 86 for _ in range(14)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
     data = response.json()
@@ -52,7 +54,7 @@ def test_invalid_frame_count_under():
     assert data["error"]["code"] == "INVALID_FRAME_SHAPE"
 
 def test_invalid_frame_count_over():
-    frames = [[0.5] * 86 for _ in range(30)]
+    frames = [[0.5] * 86 for _ in range(31)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
     data = response.json()
@@ -60,7 +62,7 @@ def test_invalid_frame_count_over():
     assert data["error"]["code"] == "INVALID_FRAME_SHAPE"
 
 def test_invalid_feature_dimension_under():
-    frames = [[0.5] * 85 for _ in range(29)]
+    frames = [[0.5] * 85 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
     data = response.json()
@@ -68,7 +70,7 @@ def test_invalid_feature_dimension_under():
     assert data["error"]["code"] == "INVALID_FEATURE_DIMENSION"
 
 def test_invalid_feature_dimension_over():
-    frames = [[0.5] * 87 for _ in range(29)]
+    frames = [[0.5] * 87 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
     data = response.json()
@@ -76,7 +78,7 @@ def test_invalid_feature_dimension_over():
     assert data["error"]["code"] == "INVALID_FEATURE_DIMENSION"
 
 def test_nan_values():
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     frames[5][10] = None # Simulating what JS stringifies NaN to (null)
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
@@ -85,7 +87,7 @@ def test_nan_values():
     assert data["error"]["code"] == "NON_FINITE_FEATURES"
 
 def test_infinity_values():
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     frames[5][10] = "Infinity" 
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 422
@@ -104,7 +106,7 @@ def test_history(monkeypatch):
     from app.api.endpoints import model_service
     monkeypatch.setattr(model_service, "_should_load", True)
     
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     client.post("/api/translate/sign", json={"frames": frames})
     
     response = client.get("/api/history")
@@ -120,7 +122,7 @@ def test_history(monkeypatch):
 
 def test_model_not_ready():
     # By default MockModelService is NOT loaded
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 503
     data = response.json()
@@ -134,7 +136,7 @@ def test_prediction_error(monkeypatch):
     monkeypatch.setattr(model_service, "predict", mock_predict)
     monkeypatch.setattr(model_service, "is_loaded", lambda: True)
     
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 500
     data = response.json()
@@ -148,7 +150,7 @@ def test_internal_server_error(monkeypatch):
     monkeypatch.setattr(model_service, "predict", mock_predict)
     monkeypatch.setattr(model_service, "is_loaded", lambda: True)
     
-    frames = [[0.5] * 86 for _ in range(29)]
+    frames = [[0.5] * 86 for _ in range(30)]
     response = client.post("/api/translate/sign", json={"frames": frames})
     assert response.status_code == 500
     data = response.json()

@@ -55,10 +55,15 @@ export function useVoiceInput(): VoiceInputState {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   
-  const isSupported = typeof window !== 'undefined' && 
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  useEffect(() => {
+    setIsSupported(
+      typeof window !== 'undefined' && 
+      !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+    );
+  }, []);
 
   const startListening = useCallback(() => {
     if (!isSupported) {

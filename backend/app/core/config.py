@@ -20,4 +20,7 @@ class Settings(BaseModel):
     MODEL_DIR: str = os.getenv("MODEL_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "models", "current")))
     MODEL_CONFIDENCE_THRESHOLD: float = float(os.getenv("MODEL_CONFIDENCE_THRESHOLD", "0.70"))
 
+    STATIC_MODEL_DIR: str = os.getenv("STATIC_MODEL_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "models", "archive", "static_v1")))
+    STATIC_MODEL_CONFIDENCE_THRESHOLD: float = float(os.getenv("STATIC_MODEL_CONFIDENCE_THRESHOLD", "0.60"))
+
 settings = Settings()

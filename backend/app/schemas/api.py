@@ -56,6 +56,7 @@ class SignPrediction(BaseModel):
     sign_id: Optional[str] = None
     label: str
     confidence: float
+    probabilities: Optional[dict] = None
 
 class ModelInfo(BaseModel):
     version: Optional[str] = None
@@ -72,20 +73,20 @@ class DetailedModelStatusResponse(BaseModel):
     model_version: Optional[str] = None
     feature_generation: str = "v2-86"
     feature_dimension: int = 86
-    frame_count: int = 29
+    frame_count: int = 30
     classes: List[dict] = Field(default_factory=list)
     status: str = "waiting_for_model"
 
 # --- Requests ---
 
 class TranslationRequest(BaseModel):
-    frames: List[List[float]] = Field(..., description="Sequence of 29 frames, each containing 86 numeric features.")
+    frames: List[List[float]] = Field(..., description="Sequence of 15 to 30 frames, each containing 86 numeric features.")
 
     @field_validator("frames")
     @classmethod
     def validate_frames(cls, frames: List[List[float]]) -> List[List[float]]:
-        if len(frames) != 29:
-            raise InvalidFrameDimensionError(f"Exactly 29 frames required, got {len(frames)}.")
+        if not (15 <= len(frames) <= 30):
+            raise InvalidFrameDimensionError(f"Sequence length must be between 15 and 30 frames, got {len(frames)}.")
         
         for i, frame in enumerate(frames):
             if len(frame) != 86:
@@ -113,7 +114,7 @@ class TextToSignRequest(BaseModel):
 class SignData(BaseModel):
     id: str
     label: str
-    video_url: str
+    video_url: Optional[str] = ""
 
 class TextToSignResponse(BaseModel):
     success: bool = True
@@ -122,3 +123,21 @@ class TextToSignResponse(BaseModel):
     gloss: List[str]
     signs: List[SignData]
     unsupported_words: List[str] = Field(default_factory=list)
+
+# --- Static Sign Recognition Schemas ---
+
+class StaticRecognitionRequest(BaseModel):
+    features: List[float] = Field(..., description="42 landmark features for a single hand (wrist-relative, max-abs normalised, XY only).")
+
+    @field_validator("features")
+    @classmethod
+    def validate_features(cls, features: List[float]) -> List[float]:
+        if len(features) != 42:
+            raise InvalidFrameDimensionError(f"Static model expects exactly 42 features, got {len(features)}.")
+
+        for i, val in enumerate(features):
+            if val is None or not isinstance(val, (int, float)) or math.isnan(val) or math.isinf(val):
+                raise InvalidFeatureError(f"Feature at index {i} is invalid (NaN, Infinity, or not a number).")
+
+        return features
+

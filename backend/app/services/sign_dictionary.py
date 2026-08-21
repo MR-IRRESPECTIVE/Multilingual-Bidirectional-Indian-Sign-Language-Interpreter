@@ -1,8 +1,7 @@
 """Sign Dictionary Service — Single source of truth for ISL sign metadata.
 
 This module provides a dictionary abstraction for looking up ISL signs.
-The current implementation uses static in-memory data. It can later be
-replaced by a database-backed implementation without changing the interface.
+It has been updated to reflect the full SignKit 3D Avatar vocabulary.
 """
 from dataclasses import dataclass
 from typing import List, Optional, Dict
@@ -12,7 +11,6 @@ class SignEntry:
     id: str
     label: str
     gloss: str
-    video: str
     aliases: List[str]
 
 class SignDictionary:
@@ -27,23 +25,44 @@ class SignDictionary:
 
 class StaticSignDictionary(SignDictionary):
     def __init__(self):
-        self._signs: List[SignEntry] = [
-            SignEntry(id="hello", label="Hello", gloss="HELLO", video="/signs/hello.mp4", aliases=["hello", "hi"]),
-            SignEntry(id="sorry", label="Sorry", gloss="SORRY", video="/signs/sorry.mp4", aliases=["sorry"]),
-            SignEntry(id="eat_food", label="Eat / Food", gloss="EAT", video="/signs/eat_food.mp4", aliases=["eat", "food"]),
-            SignEntry(id="indian", label="Indian", gloss="INDIAN", video="/signs/indian.mp4", aliases=["indian", "india"]),
-            SignEntry(id="namaste", label="Namaste", gloss="NAMASTE", video="/signs/namaste.mp4", aliases=["namaste"]),
-            SignEntry(id="thank_you", label="Thank You", gloss="THANK_YOU", video="/signs/thank_you.mp4", aliases=["thank", "thanks", "thank you"]),
-            SignEntry(id="love", label="Love", gloss="LOVE", video="/signs/love.mp4", aliases=["love"]),
-            SignEntry(id="good", label="Good", gloss="GOOD", video="/signs/good.mp4", aliases=["good", "great", "nice"]),
-            SignEntry(id="yes", label="Yes", gloss="YES", video="/signs/yes.mp4", aliases=["yes", "yeah", "yep"]),
-            SignEntry(id="no", label="No", gloss="NO", video="/signs/no.mp4", aliases=["no", "nope", "nah"]),
+        # SignKit vocabulary list
+        words = [
+            'TIME', 'HOME', 'PERSON', 'YOU', 'DOCTOR', 'SCHOOL', 'THINK',
+            'HELLO', 'PLEASE', 'THANKYOU', 'SORRY', 'WHAT', 'YOUR', 'NAME',
+            'YES', 'NO', 'GOOD', 'BAD', 'EAT', 'DRINK',
+            'MOTHER', 'FATHER', 'BROTHER', 'SISTER',
+            'I', 'ME', 'MY', 'HE', 'SHE', 'IT', 'WE', 'THEY',
+            'COME', 'GO', 'STOP', 'WAIT', 'HELP',
+            'SEE', 'LOOK', 'WATCH', 'HEAR',
+            'HAPPY', 'SAD', 'ANGRY', 'LOVE', 'LIKE', 'WANT',
+            'MORNING', 'NIGHT', 'DAY', 'WEEK', 'MONTH', 'YEAR',
+            'HOUSE', 'FRIEND', 'WORK', 'PLAY', 'LEARN',
+            'BOOK', 'READ', 'WRITE',
+            'FOOD', 'WATER', 'MILK'
         ]
         
+        # Numbers and alphabets for fingerspelling fallback are also supported by SignKit,
+        # but we handle them differently (as letter-by-letter).
+        # We can add 0-9 and A-Z to the alias map as well if needed.
+        
+        self._signs: List[SignEntry] = []
+        for w in words:
+            # Special case variations
+            aliases = [w.lower()]
+            if w == 'THANKYOU':
+                aliases.append('thank you')
+                aliases.append('thanks')
+            if w == 'HELLO':
+                aliases.append('hi')
+                
+            self._signs.append(
+                SignEntry(id=w.lower(), label=w, gloss=w, aliases=aliases)
+            )
+            
         self._alias_map: Dict[str, SignEntry] = {}
         for sign in self._signs:
             for alias in sign.aliases:
-                self._alias_map[alias.lower()] = sign
+                self._alias_map[alias] = sign
 
     def lookup_by_word(self, word: str) -> Optional[SignEntry]:
         return self._alias_map.get(word.lower())

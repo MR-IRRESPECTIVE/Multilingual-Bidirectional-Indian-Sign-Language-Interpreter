@@ -25,6 +25,7 @@ def validate_dataset(filepath):
     invalid_samples = 0
     missing_fields = 0
     nan_infinity_count = 0
+    requires_preprocessing = 0
     shape_errors = 0
     generation_mixing = 0
     
@@ -70,10 +71,13 @@ def validate_dataset(filepath):
             invalid_samples += 1
         
         frames = sample["frames"]
-        if len(frames) != 29:
+        if not (15 <= len(frames) <= 30):
             shape_errors += 1
             invalid_samples += 1
         else:
+            if len(frames) != 30:
+                requires_preprocessing += 1
+                
             wrong_dim = False
             has_nan = False
             for frame in frames:
@@ -90,7 +94,8 @@ def validate_dataset(filepath):
                 invalid_samples += 1
             
             # Check duplicate sequence (by min_hashing or just tuple-izing a sample of frames)
-            seq_hash = hash(tuple(frames[0] + frames[15] + frames[-1]))
+            # Use safe indices for frames
+            seq_hash = hash(tuple(frames[0] + frames[len(frames)//2] + frames[-1]))
             if seq_hash in sequences_seen:
                 duplicate_sequences += 1
                 # Not counted as strictly invalid here, but flagged
@@ -129,10 +134,12 @@ def validate_dataset(filepath):
     print("")
     
     print(f"Feature generation: {global_feature_gen}\n")
+    print(f"Canonical Target Frames: 30")
+    print(f"Requires Temporal Preprocessing: {requires_preprocessing}\n")
     
     print(f"Invalid samples: {invalid_samples}")
     print(f"  - Missing fields: {missing_fields}")
-    print(f"  - Wrong shape: {shape_errors}")
+    print(f"  - Wrong shape (not 15-30x86): {shape_errors}")
     print(f"  - NaN/Infinity: {nan_infinity_count}")
     print(f"  - Mixed 42/86 generation: {generation_mixing}")
     print(f"Duplicate sample IDs: {duplicate_ids}")

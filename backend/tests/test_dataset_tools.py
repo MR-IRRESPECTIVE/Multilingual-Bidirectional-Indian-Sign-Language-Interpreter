@@ -12,7 +12,7 @@ def create_valid_dataset():
         "metadata": {
             "feature_generation": "v2-86",
             "feature_dimension": 86,
-            "frame_count": 29
+            "frame_count": 30
         },
         "dataset": [
             {
@@ -20,7 +20,7 @@ def create_valid_dataset():
                 "sign_id": "hello",
                 "signer_id": "u5",
                 "signer_name": "User 5",
-                "frames": [[0.0]*86 for _ in range(29)]
+                "frames": [[0.0]*86 for _ in range(30)]
             }
         ]
     }
@@ -38,7 +38,7 @@ def test_valid_dataset():
 
 def test_invalid_shape():
     data = create_valid_dataset()
-    data["dataset"][0]["frames"] = [[0.0]*85 for _ in range(29)]
+    data["dataset"][0]["frames"] = [[0.0]*85 for _ in range(30)]
     with tempfile.NamedTemporaryFile(mode='w+', suffix=".json", delete=False) as f:
         json.dump(data, f)
         filepath = f.name

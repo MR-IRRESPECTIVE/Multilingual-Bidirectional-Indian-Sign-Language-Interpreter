@@ -32,3 +32,6 @@ models/
 
 # Dataset Exports
 datasets/pilot/exports/*.json
+
+# ── Agent Artifacts ───────────────────────────────────────────────
+brain/

@@ -9,3 +9,44 @@
     font-family: var(--font-sans);
   }
 }
+/* High Contrast Mode Overrides */
+html.high-contrast-mode {
+  --tw-bg-opacity: 1 !important;
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+html.high-contrast-mode body {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+html.high-contrast-mode * {
+  border-color: #fff !important;
+}
+
+html.high-contrast-mode header,
+html.high-contrast-mode nav,
+html.high-contrast-mode section,
+html.high-contrast-mode div {
+  background-color: transparent !important;
+  color: #fff !important;
+}
+
+html.high-contrast-mode button, 
+html.high-contrast-mode a,
+html.high-contrast-mode input,
+html.high-contrast-mode textarea,
+html.high-contrast-mode select {
+  background-color: #000 !important;
+  color: #ffeb3b !important;
+  border: 2px solid #ffeb3b !important;
+}
+
+html.high-contrast-mode .text-gray-500,
+html.high-contrast-mode .text-gray-600,
+html.high-contrast-mode .text-gray-900,
+html.high-contrast-mode .text-blue-600,
+html.high-contrast-mode .text-blue-900 {
+  color: #fff !important;
+}

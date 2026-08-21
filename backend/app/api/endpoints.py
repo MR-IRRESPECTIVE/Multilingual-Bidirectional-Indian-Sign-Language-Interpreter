@@ -16,18 +16,26 @@ from app.schemas.api import (
     ErrorDetail,
     TextToSignRequest,
     TextToSignResponse,
-    SignData
+    SignData,
+    StaticRecognitionRequest,
 )
 from app.services.model_service import MockModelService, ModelStatus
 from app.services.recognition_service import RecognitionService
 from app.services.history_service import history_service
 from app.services.text_translation_service import text_translation_service
+from app.services.static_model_service import StaticModelService
 from app.core.exceptions import ModelNotReadyError
 from app.core.config import settings
 
 api_router = APIRouter()
 model_service = MockModelService(should_load=False)
 recognition_service = RecognitionService(model_service)
+
+# Static model (42-feature ANN classifier) — loaded once at startup
+try:
+    static_model_service = StaticModelService(settings.STATIC_MODEL_DIR)
+except Exception:
+    static_model_service = None
 
 @api_router.get("/health", response_model=HealthResponse)
 async def get_health():
@@ -83,6 +91,38 @@ async def translate_sign(request_data: TranslationRequest):
         )
     )
 
+@api_router.post("/translate/sign/static")
+async def translate_sign_static(request_data: StaticRecognitionRequest):
+    """
+    Static 42-feature recognition using the merged static_v1 ANN model.
+    Returns prediction label, confidence, and full probability distribution.
+    """
+    if static_model_service is None or not static_model_service.is_loaded():
+        raise ModelNotReadyError("Static model is not loaded.")
+
+    result = static_model_service.predict(request_data.features)
+
+    # Build label→probability map for the top-5 display
+    probabilities = {}
+    if result.probabilities:
+        for idx, prob in enumerate(result.probabilities):
+            lbl = static_model_service.label_map.get(str(idx), f"class_{idx}")
+            probabilities[lbl] = prob
+
+    return {
+        "success": True,
+        "prediction": {
+            "sign_id": result.sign_id,
+            "label": result.label,
+            "confidence": result.confidence,
+            "probabilities": probabilities,
+        },
+        "model": {
+            "version": static_model_service.model_version,
+            "feature_generation": "42-landmark-xy-wrist-normalized",
+        }
+    }
+
 @api_router.get("/history", response_model=HistoryResponse)
 async def get_history():
     return HistoryResponse(
@@ -115,7 +155,7 @@ async def translate_text_to_sign(request_data: TextToSignRequest):
             SignData(
                 id=sign.id,
                 label=sign.label,
-                video_url=sign.video
+                video_url=""
             )
             for sign in result.signs
         ],
