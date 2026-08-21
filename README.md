@@ -1,47 +1,76 @@
-﻿# Multilingual Bidirectional Indian Sign Language Interpreter (ISL)
+# Multilingual Bidirectional Indian Sign Language Interpreter (ISL)
 
-This repository contains the frontend application and data collection tool for the Multilingual Bidirectional ISL Interpreter.
+This repository contains the full-stack application for the Indian Sign Language (ISL) Interpreter, featuring live camera-based ISL-to-text recognition and text-to-ISL 3D avatar animation.
 
-## 🛠️ Setup and Installation
+## 🚀 Presentation Setup Guide
 
-1. **Clone the repository:**
+The project consists of two parts that must run simultaneously: a Python backend (FastAPI) and a Next.js frontend.
+
+### Prerequisites
+- **Node.js** (v18+ recommended)
+- **Python 3.12**
+
+---
+
+### Step 1: Start the Backend (API & ML Models)
+
+The backend runs the machine learning models and translation endpoints.
+
+1. Open a new terminal and navigate to the backend folder:
    ```bash
-   git clone https://github.com/MR-IRRESPECTIVE/Multilingual-Bidirectional-Indian-Sign-Language-Interpreter.git
+   cd backend
    ```
 
-2. **Navigate to the frontend directory:**
+2. Create a virtual environment and activate it:
    ```bash
-   cd "Multilingual-Bidirectional-Indian-Sign-Language-Interpreter/frontend"
-   # Or simply `cd frontend` if you are already in the project root
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On Mac/Linux:
+   source venv/bin/activate
    ```
 
-3. **Install dependencies:**
+3. Install the dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Start the FastAPI server:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   *The backend will run on `http://localhost:8000`*
+
+---
+
+### Step 2: Start the Frontend (UI)
+
+The frontend contains the web interface, the camera capture, and the 3D SignKit player.
+
+1. Open a **second** terminal and navigate to the frontend folder:
+   ```bash
+   cd frontend
+   ```
+
+2. Install the dependencies:
    ```bash
    npm install
    ```
 
-4. **Start the development server:**
+3. Start the Next.js development server:
    ```bash
    npm run dev
    ```
 
-5. **Open the application:** 
-   Go to [http://localhost:3000/collection](http://localhost:3000/collection) in your web browser.
+4. Open the application:
+   Go to [http://localhost:3000](http://localhost:3000) in your web browser.
 
 ---
 
-## 🗄️ Where is the Database Stored?
+## 🧭 Key Features
+- **Sign → Text (Camera):** Navigate to `/conversation` to use live webcam recognition.
+- **Text → Sign (Avatar):** Navigate to `/translate` to convert text sentences to 3D avatar animations.
+- **Dictionary:** Navigate to `/dictionary` to explore the ISL vocabulary library.
+- **Settings:** Navigate to `/settings` for high contrast, subtitle toggles, and signing speed controls.
 
-To ensure maximum privacy, **no video or facial data is ever saved or transmitted to a central server**. The tool operates entirely locally.
-
-1. **Local Storage (IndexedDB):** 
-   All recorded frames (hand landmark features) are saved directly in your browser's local **IndexedDB**. 
-   - This means the data is completely private to the computer you are currently using.
-   
-2. **Exporting the Data:**
-   To share or save your dataset permanently, you must manually export it:
-   - Click the **"Export Dataset (JSON)"** button at the bottom of the collection page.
-   - This will download a `.json` file containing your recorded samples.
-   - You can then store this `.json` file wherever you like (e.g., share it with teammates for merging).
-
-For more detailed information on how the dataset collection works, including signer identities and two-handed signs, please see our [Collection Guide](docs/COLLECTION_GUIDE.md).
+*Note: All data processing happens locally for privacy and speed. Ensure your browser has camera permissions enabled.*
